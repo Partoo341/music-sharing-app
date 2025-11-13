@@ -281,10 +281,10 @@ const Upload = () => {
                     disabled={uploading}
                 >
                     <option value="styles">Styles</option>
-                    <option value="documents">Documents</option>
-                    <option value="images">Images</option>
-                    <option value="music">Music</option>
-                    <option value="videos">Videos</option>
+                    <option value="Multipads">Multipads</option>
+                    <option value="midifiles">Midifiles</option>
+                    <option value="audiobeats">Audiobeats</option>
+                    <option value="voices">Voices</option>
                 </select>
             </div>
 
