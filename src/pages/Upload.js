@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { storage, db, auth } from '../firebase/config';
+import { storage, db, auth } from './firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
 import './upload.css';
@@ -9,9 +9,13 @@ const Upload = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [category, setCategory] = useState('styles');
     const [title, setTitle] = useState('');
+    const [uploading, setUploading] = useState(false);
 
     const handleUpload = async () => {
-        if (!file || !title) return;
+        if (!file || !title) {
+            alert('Please select a file and enter a title');
+            return;
+        }
 
         const user = auth.currentUser;
         if (!user) {
@@ -19,107 +23,92 @@ const Upload = () => {
             return;
         }
 
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `${title.replace(/\s+/g, '_')}.${fileExtension}`;
-        const storagePath = `uploads/${category}/${user.uid}/${fileName}`;
+        setUploading(true);
 
-        const storageRef = ref(storage, storagePath);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        try {
+            const fileExtension = file.name.split('.').pop();
+            const filename = `${title.replace(/\s+/g, '-')}.${fileExtension}`;
+            const storagePath = `uploads/${category}/${user.uid}/${filename}`;
 
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-            },
-            (error) => {
-                console.error('Upload failed:', error);
-                alert(`Upload failed: ${error.message}`);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            const storageRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(storageRef, file);
 
-                await addDoc(collection(db, 'uploads'), {
-                    title: title,
-                    category: category,
-                    fileName: file.name,
-                    fileSize: file.size,
-                    fileType: file.type,
-                    downloadURL: downloadURL,
-                    storagePath: storagePath,
-                    userId: user.uid,
-                    userEmail: user.email,
-                    timestamp: new Date(),
-                    likes: 0,
-                    downloads: 0
-                });
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error('Upload failed:', error);
+                    alert('Upload failed: ' + error.message);
+                    setUploading(false);
+                },
+                async () => {
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-                setUploadProgress(100);
-                alert('File uploaded successfully!');
+                        // Save file metadata to Firestore
+                        await addDoc(collection(db, 'files'), {
+                            title: title,
+                            category: category,
+                            filename: filename,
+                            url: downloadURL,
+                            userId: user.uid,
+                            createdAt: new Date(),
+                            size: file.size,
+                            type: file.type
+                        });
 
-                setFile(null);
-                setTitle('');
-                setUploadProgress(0);
-            }
-        );
-    };
-
-    const getAcceptedFileTypes = () => {
-        switch (category) {
-            case 'styles':
-                return '.sff1,.sff2,.sty';
-            case 'voices':
-                return '.vce,.uvn,.lib';
-            case 'multipads':
-                return '.mpd,.pad';
-            case 'midi':
-                return '.mid,.midi';
-            case 'audio-beats':
-                return '.wav,.mp3,.aiff';
-            default:
-                return '*';
+                        alert('File uploaded successfully!');
+                        setUploadProgress(0);
+                        setTitle('');
+                        setFile(null);
+                    } catch (error) {
+                        console.error('Error saving metadata:', error);
+                        alert('Error saving file metadata');
+                    } finally {
+                        setUploading(false);
+                    }
+                }
+            );
+        } catch (error) {
+            console.error('Error starting upload:', error);
+            alert('Error starting upload: ' + error.message);
+            setUploading(false);
         }
     };
 
     return (
         <div className="upload-container">
             <h2>Upload File</h2>
-
-            <div className="form-group">
-                <label>Category:</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                    <option value="styles">Styles (.sff1, .sff2, .sty)</option>
-                    <option value="voices">Voices</option>
-                    <option value="multipads">Multipads</option>
-                    <option value="midi">MIDI</option>
-                    <option value="audio-beats">Audio Beats</option>
-                </select>
-            </div>
-
-            <div className="form-group">
-                <label>Title:</label>
-                <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter file title"
-                />
-            </div>
-
-            <div className="form-group">
-                <label>File:</label>
-                <input
-                    type="file"
-                    accept={getAcceptedFileTypes()}
-                    onChange={(e) => setFile(e.target.files[0])}
-                />
-                <small>Accepted types: {getAcceptedFileTypes()}</small>
-            </div>
-
-            <button onClick={handleUpload} disabled={!file || !title}>
-                Upload File
+            <input
+                type="text"
+                placeholder="File title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={uploading}
+            />
+            <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                disabled={uploading}
+            >
+                <option value="styles">Styles</option>
+                <option value="documents">Documents</option>
+                <option value="images">Images</option>
+            </select>
+            <input
+                type="file"
+                onChange={(e) => setFile(e.target.files[0])}
+                disabled={uploading}
+            />
+            <button
+                onClick={handleUpload}
+                disabled={uploading || !file || !title}
+            >
+                {uploading ? 'Uploading...' : 'Upload'}
             </button>
-
-            {uploadProgress > 0 && uploadProgress < 100 && (
+            {uploadProgress > 0 && (
                 <div className="progress-bar">
                     <div
                         className="progress"
