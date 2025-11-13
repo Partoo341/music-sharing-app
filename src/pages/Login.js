@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { useAudio } from '../context/AudioContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/config';
+
 const Login = () => {
-    const { login } = useAudio();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
@@ -20,8 +19,7 @@ const Login = () => {
             border: '1px solid #333',
             boxShadow: '0 15px 40px rgba(0, 0, 0, 0.5)',
             position: 'relative',
-            overflow: 'hidden',
-            animation: 'formSlideIn 0.6s ease-out'
+            overflow: 'hidden'
         },
         authFormBefore: {
             content: '""',
@@ -43,8 +41,7 @@ const Login = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            padding: '10px 0',
-            transition: 'all 0.3s ease'
+            padding: '10px 0'
         },
         formGroup: {
             marginBottom: '25px'
@@ -81,10 +78,6 @@ const Login = () => {
             letterSpacing: '1px',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden'
-        },
-        buttonPrimary: {
             background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
             color: '#000',
             boxShadow: '0 6px 20px rgba(255, 215, 0, 0.4)'
@@ -97,9 +90,7 @@ const Login = () => {
             marginBottom: '25px',
             fontWeight: 600,
             textAlign: 'center',
-            border: '2px solid #ff3333',
-            boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)',
-            animation: 'shake 0.5s ease-in-out'
+            border: '2px solid #ff3333'
         },
         authLink: {
             textAlign: 'center',
@@ -109,9 +100,7 @@ const Login = () => {
         link: {
             color: '#FFD700',
             textDecoration: 'none',
-            fontWeight: 700,
-            transition: 'all 0.3s ease',
-            borderBottom: '2px solid transparent'
+            fontWeight: 700
         }
     };
 
@@ -132,14 +121,6 @@ const Login = () => {
                 formData.email,
                 formData.password
             );
-
-            const user = userCredential.user;
-
-            login({
-                username: user.email.split('@')[0],
-                email: user.email,
-                uid: user.uid
-            });
 
             alert('Login successful!');
             navigate('/');
@@ -174,42 +155,27 @@ const Login = () => {
         }
     };
 
-    // Dynamic styles for hover effects
+    // Dynamic styles
     const getInputStyle = (isFocused = false) => ({
         ...styles.input,
         borderColor: isFocused ? '#FFD700' : '#444',
         background: isFocused ? '#3a3a3a' : '#333',
-        boxShadow: isFocused ? '0 0 0 4px rgba(255, 215, 0, 0.2)' : 'none',
-        transform: isFocused ? 'translateY(-2px)' : 'none'
+        boxShadow: isFocused ? '0 0 0 4px rgba(255, 215, 0, 0.2)' : 'none'
     });
 
     const getButtonStyle = () => ({
         ...styles.button,
-        ...styles.buttonPrimary,
         opacity: loading ? 0.6 : 1,
         cursor: loading ? 'not-allowed' : 'pointer'
     });
 
-    const getTitleStyle = (isHovered = false) => ({
-        ...styles.title,
-        transform: isHovered ? 'scale(1.05)' : 'none',
-        textShadow: isHovered ? '0 5px 15px rgba(255, 215, 0, 0.4)' : 'none'
-    });
-
-    const [isTitleHovered, setIsTitleHovered] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
 
     return (
         <div style={styles.authForm}>
             <div style={styles.authFormBefore}></div>
-            <h2
-                style={getTitleStyle(isTitleHovered)}
-                onMouseEnter={() => setIsTitleHovered(true)}
-                onMouseLeave={() => setIsTitleHovered(false)}
-            >
-                Login
-            </h2>
+            <h2 style={styles.title}>Login</h2>
 
             {error && <div style={styles.errorMessage}>{error}</div>}
 
@@ -249,20 +215,6 @@ const Login = () => {
                     type="submit"
                     style={getButtonStyle()}
                     disabled={loading}
-                    onMouseEnter={(e) => {
-                        if (!loading) {
-                            e.target.style.transform = 'translateY(-3px)';
-                            e.target.style.boxShadow = '0 10px 30px rgba(255, 215, 0, 0.6)';
-                            e.target.style.borderRadius = '15px';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!loading) {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
-                            e.target.style.borderRadius = '12px';
-                        }
-                    }}
                 >
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
@@ -271,68 +223,11 @@ const Login = () => {
             <div style={styles.authLink}>
                 <p>
                     Don't have an account?{' '}
-                    <Link
-                        to="/register"
-                        style={styles.link}
-                        onMouseEnter={(e) => {
-                            e.target.style.color = '#FFA500';
-                            e.target.style.borderBottom = '2px solid #FFA500';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.color = '#FFD700';
-                            e.target.style.borderBottom = '2px solid transparent';
-                        }}
-                    >
+                    <Link to="/register" style={styles.link}>
                         Register here
                     </Link>
                 </p>
             </div>
-
-            <style>
-                {`
-          @keyframes formSlideIn {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-          }
-          
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          
-          @media (max-width: 768px) {
-            .auth-form {
-              margin: 40px 20px !important;
-              padding: 30px 25px !important;
-            }
-            
-            .auth-form h2 {
-              font-size: 1.8rem !important;
-            }
-            
-            .form-group input {
-              padding: 14px 18px !important;
-            }
-            
-            .btn {
-              padding: 14px 18px !important;
-              font-size: 1rem !important;
-            }
-          }
-        `}
-            </style>
         </div>
     );
 };
