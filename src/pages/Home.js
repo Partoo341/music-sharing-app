@@ -68,7 +68,7 @@ const Home = () => {
                 <div className="hero-content">
                     <h1>LENSKINGS PRODUCTIONS</h1>
                     <p className="tagline">Capturing Life, Creating Art</p>
-                    <p className="subtitle">Share Your Musical Masterpieces with the World</p>
+                    <p className="subtitle">Share Your Piano/Organ files with the World</p>
                 </div>
             </section>
 
