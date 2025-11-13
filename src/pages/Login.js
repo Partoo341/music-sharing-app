@@ -3,7 +3,6 @@ import { useAudio } from '../context/AudioContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/config';
-
 const Login = () => {
     const { login } = useAudio();
     const navigate = useNavigate();
