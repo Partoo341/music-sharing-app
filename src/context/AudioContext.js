@@ -1,55 +1,123 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth, storage, db } from '../firebase/config';
 
 const AudioContext = createContext();
 
 export const useAudio = () => {
-    const context = useContext(AudioContext);
-    if (!context) {
-        throw new Error('useAudio must be used within an AudioProvider');
-    }
-    return context;
+    return useContext(AudioContext);
 };
 
 export const AudioProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [audioItems, setAudioItems] = useState([]);
-    const [currentPlaying, setCurrentPlaying] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [currentAudio, setCurrentAudio] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const [audioDuration, setAudioDuration] = useState(0);
 
     useEffect(() => {
-        // Check if user is logged in
-        const savedUser = localStorage.getItem('musicUser');
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
-        }
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setLoading(false);
+        });
+
+        return unsubscribe;
     }, []);
 
-    const login = (userData) => {
-        setUser(userData);
-        localStorage.setItem('musicUser', JSON.stringify(userData));
+    const playAudio = (audioUrl) => {
+        if (currentAudio) {
+            currentAudio.pause();
+        }
+
+        const audio = new Audio(audioUrl);
+        setCurrentAudio(audio);
+        setIsPlaying(true);
+
+        audio.play().catch(error => {
+            console.error('Error playing audio:', error);
+            setIsPlaying(false);
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            setAudioProgress((audio.currentTime / audio.duration) * 100);
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            setAudioDuration(audio.duration);
+        });
+
+        audio.addEventListener('ended', () => {
+            setIsPlaying(false);
+            setAudioProgress(0);
+        });
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('musicUser');
+    const pauseAudio = () => {
+        if (currentAudio) {
+            currentAudio.pause();
+            setIsPlaying(false);
+        }
     };
 
-    const addAudioItem = (item) => {
-        setAudioItems(prev => [...prev, item]);
+    const resumeAudio = () => {
+        if (currentAudio && !isPlaying) {
+            currentAudio.play().then(() => {
+                setIsPlaying(true);
+            }).catch(error => {
+                console.error('Error resuming audio:', error);
+            });
+        }
+    };
+
+    const stopAudio = () => {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            setIsPlaying(false);
+            setAudioProgress(0);
+        }
+    };
+
+    const seekAudio = (progress) => {
+        if (currentAudio && audioDuration) {
+            const newTime = (progress / 100) * audioDuration;
+            currentAudio.currentTime = newTime;
+            setAudioProgress(progress);
+        }
+    };
+
+    const logout = async () => {
+        try {
+            await signOut(auth);
+            setUser(null);
+            stopAudio();
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
     };
 
     const value = {
         user,
-        login,
+        loading,
         logout,
-        audioItems,
-        addAudioItem,
-        currentPlaying,
-        setCurrentPlaying
+        currentAudio,
+        isPlaying,
+        audioProgress,
+        audioDuration,
+        playAudio,
+        pauseAudio,
+        resumeAudio,
+        stopAudio,
+        seekAudio,
+        auth,
+        storage,
+        db
     };
 
     return (
         <AudioContext.Provider value={value}>
-            {children}
+            {!loading && children}
         </AudioContext.Provider>
     );
 };

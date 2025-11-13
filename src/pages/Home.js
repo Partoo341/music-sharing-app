@@ -1,163 +1,169 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAudio } from '../context/AudioContext';
-
-const AudioCard = ({ item }) => (
-    <div className="audio-card">
-        <div className="audio-info">
-            <h4>{item.title}</h4>
-            <p>By {item.artist}</p>
-            <span className="file-type">.{item.fileType}</span>
-        </div>
-        {item.type === 'audio' && (
-            <audio controls className="audio-player">
-                <source src={item.audioUrl} type={`audio/${item.fileType}`} />
-                Your browser does not support the audio element.
-            </audio>
-        )}
-        <a href={item.audioUrl} download className="download-btn">
-            Download .{item.fileType}
-        </a>
-    </div>
-);
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import './Home.css';
 
 const Home = () => {
-    const { user, audioItems } = useAudio();
+    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        styles: 0,
+        voices: 0,
+        multipads: 0,
+        midi: 0,
+        audioBeats: 0
+    });
+
+    useEffect(() => {
+        fetchFiles();
+        fetchStats();
+    }, []);
+
+    const fetchFiles = async () => {
+        try {
+            const q = query(collection(db, 'uploads'), orderBy('timestamp', 'desc'));
+            const querySnapshot = await getDocs(q);
+            const filesData = [];
+            querySnapshot.forEach((doc) => {
+                filesData.push({ id: doc.id, ...doc.data() });
+            });
+            setFiles(filesData);
+        } catch (error) {
+            console.error('Error fetching files:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'uploads'));
+            const statsData = {
+                styles: 0,
+                voices: 0,
+                multipads: 0,
+                midi: 0,
+                audioBeats: 0
+            };
+
+            querySnapshot.forEach((doc) => {
+                const file = doc.data();
+                if (statsData[file.category] !== undefined) {
+                    statsData[file.category]++;
+                }
+            });
+
+            setStats(statsData);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
+
+    const recentFiles = files.slice(0, 6); // Show only 6 recent files
 
     return (
-        <div className="home">
+        <div className="home-container">
             {/* Hero Section */}
-            <section className="hero">
+            <section className="hero-section">
                 <div className="hero-content">
-                    <div className="hero-logo">
-                        <img src="/logo.png" alt="Lenskings Productions" className="hero-logo-image" />
-                    </div>
                     <h1>LENSKINGS PRODUCTIONS</h1>
-                    <p className="hero-tagline">Capturing Life, Creating Art</p>
-                    <p className="hero-description">Share Your Musical Masterpieces with the World</p>
-                    {!user && (
-                        <div className="hero-buttons">
-                            <Link to="/register" className="btn btn-primary">Join Now</Link>
-                            <Link to="/styles" className="btn btn-secondary">Explore Sounds</Link>
-                        </div>
-                    )}
+                    <p className="tagline">Capturing Life, Creating Art</p>
+                    <p className="subtitle">Share Your Musical Masterpieces with the World</p>
                 </div>
             </section>
 
             {/* Stats Section */}
-            <section className="stats">
-                <div className="stat-item">
-                    <h3>{audioItems.filter(item => item.type === 'style').length}+</h3>
-                    <p>Styles</p>
-                </div>
-                <div className="stat-item">
-                    <h3>{audioItems.filter(item => item.type === 'voice').length}+</h3>
-                    <p>Voices</p>
-                </div>
-                <div className="stat-item">
-                    <h3>{audioItems.filter(item => item.type === 'multipad').length}+</h3>
-                    <p>Multipads</p>
-                </div>
-                <div className="stat-item">
-                    <h3>{audioItems.filter(item => item.type === 'midi').length}+</h3>
-                    <p>MIDI Files</p>
-                </div>
-                <div className="stat-item">
-                    <h3>{audioItems.filter(item => item.type === 'audio').length}+</h3>
-                    <p>Audio Beats</p>
+            <section className="stats-section">
+                <div className="stats-grid">
+                    <div className="stat-item">
+                        <div className="stat-number">0+</div>
+                        <div className="stat-label">STYLES</div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0+</div>
+                        <div className="stat-label">VOICES</div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0+</div>
+                        <div className="stat-label">MULTIPADS</div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0+</div>
+                        <div className="stat-label">MIDI FILES</div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-number">0+</div>
+                        <div className="stat-label">AUDIO BEATS</div>
+                    </div>
                 </div>
             </section>
 
             {/* Recently Added Section */}
-            <section className="featured">
-                <h2>Recently Added</h2>
-                <p className="section-subtitle">Discover the latest uploads from our community</p>
-                {audioItems.length > 0 ? (
-                    <div className="audio-grid">
-                        {audioItems.slice(-6).map(item => (
-                            <AudioCard key={item.id} item={item} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="empty-state">
+            <section className="recent-section">
+                <div className="section-header">
+                    <h2>Recently Added</h2>
+                    <p>Discover the latest uploads from our community</p>
+                </div>
+
+                {loading ? (
+                    <div className="loading">Loading...</div>
+                ) : recentFiles.length === 0 ? (
+                    <div className="no-files">
                         <h3>No files yet</h3>
                         <p>Be the first to share your sounds with the community!</p>
-                        {user ? (
-                            <Link to="/upload" className="btn btn-primary">Upload First File</Link>
-                        ) : (
-                            <Link to="/register" className="btn btn-primary">Join to Upload</Link>
-                        )}
+                        <button className="upload-cta">UPLOAD FIRST FILE</button>
+                    </div>
+                ) : (
+                    <div className="files-grid">
+                        {recentFiles.map((file) => (
+                            <div key={file.id} className="file-card">
+                                <div className="file-icon"></div>
+                                <div className="file-info">
+                                    <h4>{file.title}</h4>
+                                    <div className="file-meta">
+                                        <span className="file-size">{(file.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+                                        <span className="file-date">{file.timestamp?.toDate?.().toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </section>
 
             {/* Categories Section */}
-            <section className="categories">
-                <div className="categories-content">
+            <section className="categories-section">
+                <div className="section-header">
                     <h2>Explore Categories</h2>
-                    <p className="section-subtitle">Find exactly what you need for your productions</p>
-                    <div className="category-grid">
-                        <Link to="/styles" className="category-card">
-                            <div className="category-icon">🎹</div>
-                            <h3>Styles</h3>
-                            <p>.sff1 .sff2 .sty</p>
-                            <span className="category-count">
-                                {audioItems.filter(item => item.type === 'style').length} files
-                            </span>
-                        </Link>
+                    <p>Find exactly what you need for your productions</p>
+                </div>
 
-                        <Link to="/voices" className="category-card">
-                            <div className="category-icon">🎤</div>
-                            <h3>Voices</h3>
-                            <p>.vce files</p>
-                            <span className="category-count">
-                                {audioItems.filter(item => item.type === 'voice').length} files
-                            </span>
-                        </Link>
+                <div className="categories-grid">
+                    <div className="category-card">
+                        <h3>Styles</h3>
+                        <p className="file-types">.SFF1 .SFF2 .STY</p>
+                        <p className="file-count">{stats.styles} files</p>
+                    </div>
 
-                        <Link to="/multipads" className="category-card">
-                            <div className="category-icon">🎛️</div>
-                            <h3>Multipads</h3>
-                            <p>.pad files</p>
-                            <span className="category-count">
-                                {audioItems.filter(item => item.type === 'multipad').length} files
-                            </span>
-                        </Link>
+                    <div className="category-card">
+                        <h3>Voices</h3>
+                        <p className="file-types">.VCE FILES</p>
+                        <p className="file-count">{stats.voices} files</p>
+                    </div>
 
-                        <Link to="/midi" className="category-card">
-                            <div className="category-icon">🎵</div>
-                            <h3>MIDI Files</h3>
-                            <p>.mid .midi</p>
-                            <span className="category-count">
-                                {audioItems.filter(item => item.type === 'midi').length} files
-                            </span>
-                        </Link>
+                    <div className="category-card">
+                        <h3>Multipads</h3>
+                        <p className="file-types">.PAD FILES</p>
+                        <p className="file-count">{stats.multipads} files</p>
+                    </div>
 
-                        <Link to="/audiobeats" className="category-card">
-                            <div className="category-icon">🥁</div>
-                            <h3>Audio Beats</h3>
-                            <p>.wav .mp3</p>
-                            <span className="category-count">
-                                {audioItems.filter(item => item.type === 'audio').length} files
-                            </span>
-                        </Link>
+                    <div className="category-card">
+                        <h3>MIDI Files</h3>
+                        <p className="file-types">.MID .MIDI</p>
+                        <p className="file-count">{stats.midi} files</p>
                     </div>
                 </div>
             </section>
-
-            {/* CTA Section */}
-            {!user && (
-                <section className="cta-section">
-                    <div className="cta-content">
-                        <h2>Ready to Share Your Sounds?</h2>
-                        <p>Join Lenskings Productions today and start sharing your musical creations with a global community of producers and artists.</p>
-                        <div className="cta-buttons">
-                            <Link to="/register" className="btn btn-primary">Create Account</Link>
-                            <Link to="/styles" className="btn btn-secondary">Browse Library</Link>
-                        </div>
-                    </div>
-                </section>
-            )}
         </div>
     );
 };
