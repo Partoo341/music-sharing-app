@@ -151,6 +151,7 @@ const Upload = () => {
         }
 
         setUploading(true);
+        setUploadProgress(0);
 
         try {
             const fileExtension = file.name.split('.').pop();
@@ -160,47 +161,54 @@ const Upload = () => {
             const storageRef = ref(storage, storagePath);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(progress);
-                },
-                (error) => {
-                    console.error('Upload failed:', error);
-                    alert('Upload failed: ' + error.message);
-                    setUploading(false);
-                },
-                async () => {
-                    try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            // Use promise for better error handling
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress(progress);
+                    },
+                    (error) => {
+                        reject(error);
+                    },
+                    async () => {
+                        try {
+                            console.log('Upload complete, getting download URL...');
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            console.log('Download URL obtained');
 
-                        await addDoc(collection(db, 'files'), {
-                            title: title,
-                            category: category,
-                            filename: filename,
-                            url: downloadURL,
-                            userId: user.uid,
-                            createdAt: new Date(),
-                            size: file.size,
-                            type: file.type
-                        });
+                            console.log('Saving to Firestore...');
+                            await addDoc(collection(db, 'files'), {
+                                title: title,
+                                category: category,
+                                filename: filename,
+                                url: downloadURL,
+                                userId: user.uid,
+                                createdAt: new Date(),
+                                size: file.size,
+                                type: file.type
+                            });
+                            console.log('Firestore save complete');
 
-                        alert('File uploaded successfully!');
-                        setUploadProgress(0);
-                        setTitle('');
-                        setFile(null);
-                        setFileName('');
-                    } catch (error) {
-                        console.error('Error saving metadata:', error);
-                        alert('Error saving file metadata');
-                    } finally {
-                        setUploading(false);
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        }
                     }
-                }
-            );
+                );
+            });
+
+            // Success - reset form
+            alert('File uploaded successfully!');
+            setUploadProgress(0);
+            setTitle('');
+            setFile(null);
+            setFileName('');
+
         } catch (error) {
-            console.error('Error starting upload:', error);
-            alert('Error starting upload: ' + error.message);
+            console.error('Upload error:', error);
+            alert('Upload failed: ' + error.message);
+        } finally {
             setUploading(false);
         }
     };
