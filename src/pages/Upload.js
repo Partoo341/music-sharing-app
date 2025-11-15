@@ -138,6 +138,7 @@ const Upload = () => {
         }
     };
 
+    // FIXED UPLOAD FUNCTION - REPLACED THE OLD ONE
     const handleUpload = async () => {
         if (!file || !title) {
             alert('Please select a file and enter a title');
@@ -165,8 +166,8 @@ const Upload = () => {
             const storageRef = ref(storage, storagePath);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            // Use promise for better error handling
-            await new Promise((resolve, reject) => {
+            // FIXED: Better promise handling - separate storage upload from Firestore save
+            const downloadURL = await new Promise((resolve, reject) => {
                 uploadTask.on('state_changed',
                     (snapshot) => {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -180,52 +181,53 @@ const Upload = () => {
                     async () => {
                         try {
                             console.log('✅ File uploaded to storage, getting download URL...');
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
                             console.log('🔗 Download URL obtained');
-
-                            console.log('💾 Saving to Firestore...');
-
-                            // FIXED: Using 'uploads' collection and consistent field names
-                            const fileData = {
-                                title: title,
-                                category: category,
-                                fileName: filename,  // Changed from 'filename' to 'fileName'
-                                fileSize: file.size,
-                                fileType: file.type,
-                                downloadURL: downloadURL,  // Changed from 'url' to 'downloadURL'
-                                storagePath: storagePath,
-                                userId: user.uid,
-                                userEmail: user.email,
-                                timestamp: new Date(),  // Changed from 'createdAt' to 'timestamp'
-                                likes: 0,
-                                downloads: 0
-                            };
-
-                            console.log('📝 Firestore data:', fileData);
-
-                            // FIXED: Changed from 'files' to 'uploads' collection
-                            await addDoc(collection(db, 'uploads'), fileData);
-                            console.log('✅ File successfully saved to Firestore!');
-
-                            resolve();
+                            resolve(url);
                         } catch (error) {
-                            console.error('❌ Firestore save error:', error);
+                            console.error('❌ Error getting download URL:', error);
                             reject(error);
                         }
                     }
                 );
             });
 
+            console.log('💾 Saving to Firestore...');
+
+            // FIXED: Simplified Firestore save
+            const fileData = {
+                title: title,
+                category: category,
+                fileName: filename,
+                fileSize: file.size,
+                fileType: file.type,
+                downloadURL: downloadURL,
+                storagePath: storagePath,
+                userId: user.uid,
+                userEmail: user.email,
+                timestamp: new Date(),
+                likes: 0,
+                downloads: 0
+            };
+
+            console.log('📝 Firestore data:', fileData);
+
+            // FIXED: Direct Firestore save without nested promises
+            await addDoc(collection(db, 'uploads'), fileData);
+            console.log('✅ File successfully saved to Firestore!');
+
             // Success - reset form
             alert('File uploaded successfully!');
             console.log('🎉 Upload process completed successfully');
+
+            // Reset form
             setUploadProgress(0);
             setTitle('');
             setFile(null);
             setFileName('');
 
         } catch (error) {
-            console.error('💥 Final upload error:', error);
+            console.error('💥 Upload error:', error);
             alert('Upload failed: ' + error.message);
         } finally {
             setUploading(false);
@@ -268,92 +270,5 @@ const Upload = () => {
 
     const [titleFocused, setTitleFocused] = useState(false);
     const [categoryFocused, setCategoryFocused] = useState(false);
-    const [fileFocused, setFileFocused] = useState(false);
-
-    return (
-        <div style={styles.uploadContainer}>
-            <div style={styles.containerBefore}></div>
-            <h2 style={styles.title}>Upload File</h2>
-
-            <div style={styles.formGroup}>
-                <label style={styles.label}>File Title:</label>
-                <input
-                    type="text"
-                    placeholder="Enter file title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onFocus={() => setTitleFocused(true)}
-                    onBlur={() => setTitleFocused(false)}
-                    style={getInputStyle(titleFocused)}
-                    disabled={uploading}
-                />
-            </div>
-
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Category:</label>
-                <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    onFocus={() => setCategoryFocused(true)}
-                    onBlur={() => setCategoryFocused(false)}
-                    style={getSelectStyle(categoryFocused)}
-                    disabled={uploading}
-                >
-                    <option value="styles">Styles</option>
-                    <option value="Multipads">Multipads</option>
-                    <option value="midifiles">Midifiles</option>
-                    <option value="audiobeats">Audiobeats</option>
-                    <option value="voices">Voices</option>
-                </select>
-            </div>
-
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Select File:</label>
-                <input
-                    type="file"
-                    onChange={handleFileChange}
-                    onFocus={() => setFileFocused(true)}
-                    onBlur={() => setFileFocused(false)}
-                    style={getFileInputStyle(fileFocused)}
-                    disabled={uploading}
-                />
-                {fileName && <div style={styles.fileName}>Selected: {fileName}</div>}
-            </div>
-
-            <button
-                onClick={handleUpload}
-                style={getButtonStyle()}
-                disabled={uploading || !file || !title}
-                onMouseEnter={(e) => {
-                    if (!uploading && file && title) {
-                        e.target.style.transform = 'translateY(-3px)';
-                        e.target.style.boxShadow = '0 10px 30px rgba(255, 215, 0, 0.6)';
-                    }
-                }}
-                onMouseLeave={(e) => {
-                    if (!uploading && file && title) {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
-                    }
-                }}
-            >
-                {uploading ? `Uploading... ${Math.round(uploadProgress)}%` : 'Upload File'}
-            </button>
-
-            {uploadProgress > 0 && (
-                <div style={styles.progressBar}>
-                    <div
-                        style={{
-                            ...styles.progress,
-                            width: `${uploadProgress}%`
-                        }}
-                    >
-                        {Math.round(uploadProgress)}%
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-export default Upload;
+    const [fileFocused, setFileFocused]
+}
