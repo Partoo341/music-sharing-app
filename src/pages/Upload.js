@@ -10,6 +10,9 @@ const Upload = () => {
     const [title, setTitle] = useState('');
     const [uploading, setUploading] = useState(false);
     const [fileName, setFileName] = useState('');
+    const [titleFocused, setTitleFocused] = useState(false);
+    const [categoryFocused, setCategoryFocused] = useState(false);
+    const [fileFocused, setFileFocused] = useState(false);
 
     const styles = {
         uploadContainer: {
@@ -138,7 +141,6 @@ const Upload = () => {
         }
     };
 
-    // FIXED UPLOAD FUNCTION - REPLACED THE OLD ONE
     const handleUpload = async () => {
         if (!file || !title) {
             alert('Please select a file and enter a title');
@@ -268,7 +270,90 @@ const Upload = () => {
         cursor: (uploading || !file || !title) ? 'not-allowed' : 'pointer'
     });
 
-    const [titleFocused, setTitleFocused] = useState(false);
-    const [categoryFocused, setCategoryFocused] = useState(false);
-    const [fileFocused, setFileFocused]
-}
+    return (
+        <div style={styles.uploadContainer}>
+            <div style={styles.containerBefore}></div>
+            <h2 style={styles.title}>Upload File</h2>
+
+            <div style={styles.formGroup}>
+                <label style={styles.label}>File Title:</label>
+                <input
+                    type="text"
+                    placeholder="Enter file title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onFocus={() => setTitleFocused(true)}
+                    onBlur={() => setTitleFocused(false)}
+                    style={getInputStyle(titleFocused)}
+                    disabled={uploading}
+                />
+            </div>
+
+            <div style={styles.formGroup}>
+                <label style={styles.label}>Category:</label>
+                <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    onFocus={() => setCategoryFocused(true)}
+                    onBlur={() => setCategoryFocused(false)}
+                    style={getSelectStyle(categoryFocused)}
+                    disabled={uploading}
+                >
+                    <option value="styles">Styles</option>
+                    <option value="Multipads">Multipads</option>
+                    <option value="midifiles">Midifiles</option>
+                    <option value="audiobeats">Audiobeats</option>
+                    <option value="voices">Voices</option>
+                </select>
+            </div>
+
+            <div style={styles.formGroup}>
+                <label style={styles.label}>Select File:</label>
+                <input
+                    type="file"
+                    onChange={handleFileChange}
+                    onFocus={() => setFileFocused(true)}
+                    onBlur={() => setFileFocused(false)}
+                    style={getFileInputStyle(fileFocused)}
+                    disabled={uploading}
+                />
+                {fileName && <div style={styles.fileName}>Selected: {fileName}</div>}
+            </div>
+
+            <button
+                onClick={handleUpload}
+                style={getButtonStyle()}
+                disabled={uploading || !file || !title}
+                onMouseEnter={(e) => {
+                    if (!uploading && file && title) {
+                        e.target.style.transform = 'translateY(-3px)';
+                        e.target.style.boxShadow = '0 10px 30px rgba(255, 215, 0, 0.6)';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!uploading && file && title) {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
+                    }
+                }}
+            >
+                {uploading ? `Uploading... ${Math.round(uploadProgress)}%` : 'Upload File'}
+            </button>
+
+            {uploadProgress > 0 && (
+                <div style={styles.progressBar}>
+                    <div
+                        style={{
+                            ...styles.progress,
+                            width: `${uploadProgress}%`
+                        }}
+                    >
+                        {Math.round(uploadProgress)}%
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Upload;
