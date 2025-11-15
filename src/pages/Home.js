@@ -190,7 +190,7 @@ const Home = () => {
         }, []);
 
         return (
-            <div style={{ margin: '10px 0', textAlign: 'center' }}>
+            <div style={{ margin: '20px 0', textAlign: 'center' }}>
                 <ins
                     className="adsbygoogle"
                     style={{ display: 'block' }}
@@ -232,7 +232,7 @@ const Home = () => {
 
         return (
             <section className="services-section" style={{
-                padding: '30px 20px', // Reduced padding
+                padding: '60px 20px',
                 background: 'linear-gradient(135deg, #FFF8DC 0%, #FFEBCD 100%)'
             }}>
                 <div className="section-header">
@@ -333,7 +333,7 @@ const Home = () => {
 
         return (
             <section className="premium-beats-section" style={{
-                padding: '30px 20px', // Reduced padding
+                padding: '60px 20px',
                 background: 'linear-gradient(135deg, #FFD700 0%, #D4AF37 100%)',
                 color: '#333'
             }}>
@@ -433,7 +433,7 @@ const Home = () => {
     // Email Opt-in Component
     const EmailOptin = () => (
         <section className="email-section" style={{
-            padding: '30px 20px', // Reduced padding
+            padding: '60px 20px',
             background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
             color: '#FFD700'
         }}>
@@ -517,7 +517,7 @@ const Home = () => {
         <footer style={{
             background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
             color: '#FFD700',
-            padding: '30px 20px 20px', // Reduced padding
+            padding: '40px 20px 20px',
             textAlign: 'center'
         }}>
             <div style={{
@@ -548,9 +548,9 @@ const Home = () => {
     const recentFiles = files.slice(0, 6);
 
     return (
-        <div className="home-container" style={{ padding: '0' }}> {/* Remove container padding */}
+        <div className="home-container">
             {/* Hero Section */}
-            <section className="hero-section" style={{ marginBottom: '0' }}> {/* Remove bottom margin */}
+            <section className="hero-section">
                 <div className="hero-content">
                     <h1>LENSKINGS PRODUCTIONS</h1>
                     <p className="tagline">Capturing Life, Creating Art</p>
@@ -562,10 +562,7 @@ const Home = () => {
             <AdSenseAd slot="home_hero_bottom" format="auto" />
 
             {/* Stats Section */}
-            <section className="stats-section" style={{
-                padding: '30px 20px', // Reduced padding
-                marginBottom: '0' // Remove bottom margin
-            }}>
+            <section className="stats-section">
                 <div className="stats-grid">
                     <div className="stat-item">
                         <div className="stat-number">{stats.styles}+</div>
@@ -597,11 +594,8 @@ const Home = () => {
             <CustomServices />
 
             {/* Recently Added Section */}
-            <section className="recent-section" style={{
-                padding: '30px 20px', // Reduced padding
-                marginBottom: '0' // Remove bottom margin
-            }}>
-                <div className="section-header" style={{ marginBottom: '20px' }}> {/* Reduced margin */}
+            <section className="recent-section">
+                <div className="section-header">
                     <h2>Recently Added</h2>
                     <p>Discover the latest uploads from our community</p>
                 </div>
@@ -615,7 +609,7 @@ const Home = () => {
                         <button className="upload-cta">UPLOAD FIRST FILE</button>
                     </div>
                 ) : (
-                    <div className="files-grid" style={{ marginTop: '20px' }}> {/* Reduced margin */}
+                    <div className="files-grid">
                         {recentFiles.map((file) => (
                             <div key={file.id} className="file-card">
                                 <div className="file-icon"></div>
@@ -639,16 +633,13 @@ const Home = () => {
             <PremiumBeats />
 
             {/* Categories Section */}
-            <section className="categories-section" style={{
-                padding: '30px 20px', // Reduced padding
-                marginBottom: '0' // Remove bottom margin
-            }}>
-                <div className="section-header" style={{ marginBottom: '20px' }}> {/* Reduced margin */}
+            <section className="categories-section">
+                <div className="section-header">
                     <h2>Explore Categories</h2>
                     <p>Find exactly what you need for your productions</p>
                 </div>
 
-                <div className="categories-grid" style={{ marginTop: '20px' }}> {/* Reduced margin */}
+                <div className="categories-grid">
                     <div className="category-card">
                         <h3>Styles</h3>
                         <p className="file-types">.SFF1 .SFF2 .STY</p>

@@ -154,9 +154,13 @@ const Upload = () => {
         setUploadProgress(0);
 
         try {
+            console.log('🚀 Starting upload process...');
+
             const fileExtension = file.name.split('.').pop();
             const filename = `${title.replace(/\s+/g, '-')}.${fileExtension}`;
             const storagePath = `uploads/${category}/${user.uid}/${filename}`;
+
+            console.log('📁 File details:', { filename, storagePath, size: file.size });
 
             const storageRef = ref(storage, storagePath);
             const uploadTask = uploadBytesResumable(storageRef, file);
@@ -167,31 +171,45 @@ const Upload = () => {
                     (snapshot) => {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                         setUploadProgress(progress);
+                        console.log(`📊 Upload progress: ${Math.round(progress)}%`);
                     },
                     (error) => {
+                        console.error('❌ Storage upload error:', error);
                         reject(error);
                     },
                     async () => {
                         try {
-                            console.log('Upload complete, getting download URL...');
+                            console.log('✅ File uploaded to storage, getting download URL...');
                             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            console.log('Download URL obtained');
+                            console.log('🔗 Download URL obtained');
 
-                            console.log('Saving to Firestore...');
-                            await addDoc(collection(db, 'files'), {
+                            console.log('💾 Saving to Firestore...');
+
+                            // FIXED: Using 'uploads' collection and consistent field names
+                            const fileData = {
                                 title: title,
                                 category: category,
-                                filename: filename,
-                                url: downloadURL,
+                                fileName: filename,  // Changed from 'filename' to 'fileName'
+                                fileSize: file.size,
+                                fileType: file.type,
+                                downloadURL: downloadURL,  // Changed from 'url' to 'downloadURL'
+                                storagePath: storagePath,
                                 userId: user.uid,
-                                createdAt: new Date(),
-                                size: file.size,
-                                type: file.type
-                            });
-                            console.log('Firestore save complete');
+                                userEmail: user.email,
+                                timestamp: new Date(),  // Changed from 'createdAt' to 'timestamp'
+                                likes: 0,
+                                downloads: 0
+                            };
+
+                            console.log('📝 Firestore data:', fileData);
+
+                            // FIXED: Changed from 'files' to 'uploads' collection
+                            await addDoc(collection(db, 'uploads'), fileData);
+                            console.log('✅ File successfully saved to Firestore!');
 
                             resolve();
                         } catch (error) {
+                            console.error('❌ Firestore save error:', error);
                             reject(error);
                         }
                     }
@@ -200,13 +218,14 @@ const Upload = () => {
 
             // Success - reset form
             alert('File uploaded successfully!');
+            console.log('🎉 Upload process completed successfully');
             setUploadProgress(0);
             setTitle('');
             setFile(null);
             setFileName('');
 
         } catch (error) {
-            console.error('Upload error:', error);
+            console.error('💥 Final upload error:', error);
             alert('Upload failed: ' + error.message);
         } finally {
             setUploading(false);
