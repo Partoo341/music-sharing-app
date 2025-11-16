@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { storage, db, auth } from '../firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Upload = () => {
     const [file, setFile] = useState(null);
@@ -37,7 +37,8 @@ const Upload = () => {
             const storageRef = ref(storage, storagePath);
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            await new Promise((resolve, reject) => {
+            // Upload the file first
+            const snapshot = await new Promise((resolve, reject) => {
                 uploadTask.on('state_changed',
                     (snapshot) => {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -46,38 +47,41 @@ const Upload = () => {
                     (error) => {
                         reject(error);
                     },
-                    async () => {
-                        try {
-                            console.log('Upload complete, getting download URL...');
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            console.log('Download URL obtained');
-
-                            console.log('Saving to Firestore...');
-                            await addDoc(collection(db, 'files'), {
-                                title: title,
-                                category: category,
-                                filename: filename,
-                                url: downloadURL,
-                                userId: user.uid,
-                                createdAt: new Date(),
-                                size: file.size,
-                                type: file.type
-                            });
-                            console.log('Firestore save complete');
-
-                            resolve();
-                        } catch (error) {
-                            reject(error);
-                        }
+                    () => {
+                        resolve(uploadTask.snapshot);
                     }
                 );
             });
 
+            console.log('Upload complete, getting download URL...');
+
+            // Get download URL
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            console.log('Download URL obtained:', downloadURL);
+
+            // Save to Firestore
+            console.log('Saving to Firestore...');
+            await addDoc(collection(db, 'uploads'), {
+                title: title,
+                category: category,
+                fileName: filename,
+                fileSize: file.size,
+                fileType: file.type,
+                downloadURL: downloadURL,
+                storagePath: storagePath,
+                userId: user.uid,
+                userEmail: user.email,
+                timestamp: serverTimestamp()
+            });
+            console.log('Firestore save complete');
+
+            // Success - reset form
             alert('File uploaded successfully!');
             setUploadProgress(0);
             setTitle('');
             setFile(null);
             setFileName('');
+            setCategory('styles');
 
         } catch (error) {
             console.error('Upload error:', error);
@@ -89,8 +93,15 @@ const Upload = () => {
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        setFile(selectedFile);
-        setFileName(selectedFile ? selectedFile.name : '');
+        if (selectedFile) {
+            setFile(selectedFile);
+            setFileName(selectedFile.name);
+            // Auto-set title from filename if not already set
+            if (!title) {
+                const nameWithoutExtension = selectedFile.name.replace(/\.[^/.]+$/, "");
+                setTitle(nameWithoutExtension);
+            }
+        }
     };
 
     // Styles - Black, White, Golden, Yellow Theme
@@ -109,7 +120,6 @@ const Upload = () => {
             fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         },
         containerHeader: {
-            content: '""',
             position: 'absolute',
             top: 0,
             left: 0,
@@ -217,18 +227,6 @@ const Upload = () => {
             background: '#333',
             boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 215, 0, 0.2)',
             transform: 'translateY(-2px)'
-        },
-        fileInputInner: {
-            width: '100%',
-            padding: '16px 20px',
-            background: '#2d2d2d',
-            border: '2px solid #444',
-            borderRadius: '12px',
-            color: 'transparent',
-            fontSize: '16px',
-            transition: 'all 0.3s ease',
-            boxSizing: 'border-box',
-            position: 'relative'
         },
 
         // File Name
@@ -346,12 +344,6 @@ const Upload = () => {
         }
     };
 
-    // Custom file input styling
-    const fileInputStyle = {
-        ...styles.fileInput,
-        ...(fileFocused ? styles.fileInputFocused : {})
-    };
-
     return (
         <div style={styles.uploadContainer}>
             <div style={styles.containerHeader}></div>
@@ -392,10 +384,10 @@ const Upload = () => {
                     disabled={uploading}
                 >
                     <option value="styles">Styles</option>
-                    <option value="Multipads">Multipads</option>
-                    <option value="midifiles">Midifiles</option>
-                    <option value="audiobeats">Audiobeats</option>
                     <option value="voices">Voices</option>
+                    <option value="multipads">Multipads</option>
+                    <option value="midifiles">MIDI Files</option>
+                    <option value="audiobeats">Audio Beats</option>
                 </select>
             </div>
 
@@ -408,8 +400,12 @@ const Upload = () => {
                     onBlur={() => setFileFocused(false)}
                     onMouseEnter={(e) => handleInputHover(e, fileFocused)}
                     onMouseLeave={(e) => handleInputLeave(e, fileFocused)}
-                    style={fileInputStyle}
+                    style={{
+                        ...styles.fileInput,
+                        ...(fileFocused ? styles.fileInputFocused : {})
+                    }}
                     disabled={uploading}
+                    accept=".sty,.sff1,.sff2,.vce,.pad,.mid,.midi,.wav,.mp3"
                 />
                 {fileName && <div style={styles.fileName}>Selected: {fileName}</div>}
             </div>
