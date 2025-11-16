@@ -131,7 +131,7 @@ const Home = () => {
 
     const recentFiles = files.slice(0, 6);
 
-    // Styles - Black, White, Golden, Yellow Theme
+    // Styles - Black, White, Golden, Yellow Theme with REDUCED SPACING
     const styles = {
         // Container
         homeContainer: {
@@ -141,10 +141,10 @@ const Home = () => {
             color: 'white'
         },
 
-        // Hero Section
+        // Hero Section - REDUCED PADDING
         heroSection: {
             background: 'linear-gradient(135deg, #000000 0%, #2d2d2d 100%)',
-            padding: '100px 20px',
+            padding: '60px 20px',
             textAlign: 'center',
             color: 'white',
             borderBottom: '3px solid #FFD700'
@@ -154,211 +154,211 @@ const Home = () => {
             margin: '0 auto'
         },
         heroTitle: {
-            fontSize: '3.5rem',
+            fontSize: '2.5rem',
             fontWeight: '800',
-            marginBottom: '20px',
+            marginBottom: '15px',
             background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
         },
         tagline: {
-            fontSize: '1.5rem',
+            fontSize: '1.3rem',
             fontWeight: '300',
-            marginBottom: '10px',
+            marginBottom: '8px',
             color: '#FFD700'
         },
         subtitle: {
-            fontSize: '1.2rem',
+            fontSize: '1.1rem',
             fontWeight: '400',
             color: '#cccccc'
         },
 
-        // Stats Section
+        // Stats Section - REDUCED PADDING
         statsSection: {
             background: '#0a0a0a',
-            padding: '60px 20px',
+            padding: '40px 20px',
             textAlign: 'center',
             borderBottom: '2px solid #333'
         },
         statsGrid: {
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '30px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '20px',
             maxWidth: '1200px',
             margin: '0 auto'
         },
         statItem: {
-            padding: '30px 20px',
+            padding: '20px 15px',
             background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)',
-            borderRadius: '15px',
+            borderRadius: '12px',
             color: 'white',
-            boxShadow: '0 10px 30px rgba(255, 215, 0, 0.1)',
+            boxShadow: '0 8px 25px rgba(255, 215, 0, 0.1)',
             border: '2px solid #333',
             transition: 'all 0.3s ease'
         },
         statNumber: {
-            fontSize: '2.5rem',
+            fontSize: '2rem',
             fontWeight: '800',
-            marginBottom: '10px',
+            marginBottom: '8px',
             color: '#FFD700'
         },
         statLabel: {
-            fontSize: '1rem',
+            fontSize: '0.9rem',
             fontWeight: '600',
             textTransform: 'uppercase',
             letterSpacing: '1px',
             color: '#cccccc'
         },
 
-        // Recent Section
+        // Recent Section - REDUCED PADDING
         recentSection: {
-            padding: '80px 20px',
+            padding: '50px 20px',
             background: '#111111'
         },
         sectionHeader: {
             textAlign: 'center',
-            marginBottom: '50px'
+            marginBottom: '30px'
         },
         sectionTitle: {
-            fontSize: '2.5rem',
+            fontSize: '2rem',
             color: '#FFD700',
-            marginBottom: '15px'
+            marginBottom: '10px'
         },
         sectionSubtitle: {
-            fontSize: '1.1rem',
+            fontSize: '1rem',
             color: '#cccccc'
         },
         filesGrid: {
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '25px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
             maxWidth: '1200px',
             margin: '0 auto'
         },
         fileCard: {
             background: '#1a1a1a',
-            padding: '25px',
-            borderRadius: '15px',
-            boxShadow: '0 5px 20px rgba(255, 215, 0, 0.1)',
+            padding: '20px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 15px rgba(255, 215, 0, 0.1)',
             transition: 'all 0.3s ease',
             border: '2px solid #333',
             borderLeft: '4px solid #FFD700'
         },
         fileIcon: {
-            width: '50px',
-            height: '50px',
+            width: '40px',
+            height: '40px',
             background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-            borderRadius: '10px',
-            marginBottom: '15px'
+            borderRadius: '8px',
+            marginBottom: '12px'
         },
         fileInfo: {
             flex: 1
         },
         fileTitle: {
-            fontSize: '1.2rem',
+            fontSize: '1.1rem',
             color: 'white',
-            marginBottom: '10px'
+            marginBottom: '8px'
         },
         fileMeta: {
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: '0.9rem',
+            fontSize: '0.85rem',
             color: '#cccccc'
         },
 
-        // Categories Section
+        // Categories Section - REDUCED PADDING
         categoriesSection: {
-            padding: '80px 20px',
+            padding: '50px 20px',
             background: '#0a0a0a'
         },
         categoriesGrid: {
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '25px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px',
             maxWidth: '1200px',
             margin: '0 auto'
         },
         categoryCard: {
             background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)',
-            padding: '30px',
-            borderRadius: '15px',
+            padding: '25px',
+            borderRadius: '12px',
             color: 'white',
             textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(255, 215, 0, 0.1)',
+            boxShadow: '0 8px 25px rgba(255, 215, 0, 0.1)',
             border: '2px solid #333',
             transition: 'all 0.3s ease'
         },
         categoryTitle: {
-            fontSize: '1.5rem',
-            marginBottom: '15px',
+            fontSize: '1.3rem',
+            marginBottom: '12px',
             color: '#FFD700'
         },
         fileTypes: {
-            fontSize: '0.9rem',
+            fontSize: '0.85rem',
             color: '#cccccc',
-            marginBottom: '10px'
+            marginBottom: '8px'
         },
         fileCount: {
-            fontSize: '1.1rem',
+            fontSize: '1rem',
             fontWeight: '700',
             color: '#FFD700'
         },
 
-        // Contact Form Section
+        // Contact Form Section - REDUCED PADDING
         contactSection: {
-            padding: '80px 20px',
+            padding: '50px 20px',
             background: '#111111',
             borderTop: '2px solid #333'
         },
         contactGrid: {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '50px',
+            gap: '30px',
             maxWidth: '1200px',
             margin: '0 auto',
             alignItems: 'start'
         },
         contactInfo: {
             background: '#1a1a1a',
-            padding: '40px',
-            borderRadius: '15px',
+            padding: '30px',
+            borderRadius: '12px',
             border: '2px solid #333'
         },
         contactForm: {
             background: '#1a1a1a',
-            padding: '40px',
-            borderRadius: '15px',
+            padding: '30px',
+            borderRadius: '12px',
             border: '2px solid #333'
         },
         formGroup: {
-            marginBottom: '25px'
+            marginBottom: '20px'
         },
         formLabel: {
             display: 'block',
-            marginBottom: '10px',
+            marginBottom: '8px',
             color: '#FFD700',
             fontWeight: '600'
         },
         formInput: {
             width: '100%',
-            padding: '15px',
+            padding: '12px',
             background: '#2d2d2d',
             border: '2px solid #444',
-            borderRadius: '8px',
+            borderRadius: '6px',
             color: 'white',
             fontSize: '16px',
             transition: 'all 0.3s ease'
         },
         formTextarea: {
             width: '100%',
-            padding: '15px',
+            padding: '12px',
             background: '#2d2d2d',
             border: '2px solid #444',
-            borderRadius: '8px',
+            borderRadius: '6px',
             color: 'white',
             fontSize: '16px',
-            minHeight: '120px',
+            minHeight: '100px',
             resize: 'vertical',
             transition: 'all 0.3s ease'
         },
@@ -366,8 +366,8 @@ const Home = () => {
             background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
             color: '#000',
             border: 'none',
-            padding: '15px 30px',
-            borderRadius: '8px',
+            padding: '12px 25px',
+            borderRadius: '6px',
             fontSize: '16px',
             fontWeight: '600',
             cursor: 'pointer',
@@ -375,49 +375,49 @@ const Home = () => {
             width: '100%'
         },
 
-        // States
+        // States - REDUCED PADDING
         loading: {
             textAlign: 'center',
-            padding: '60px 20px',
-            fontSize: '1.2rem',
+            padding: '40px 20px',
+            fontSize: '1.1rem',
             color: '#cccccc'
         },
         noFiles: {
             textAlign: 'center',
-            padding: '60px 20px',
+            padding: '40px 20px',
             background: '#1a1a1a',
-            borderRadius: '15px',
-            boxShadow: '0 5px 20px rgba(255, 215, 0, 0.1)',
+            borderRadius: '12px',
+            boxShadow: '0 4px 15px rgba(255, 215, 0, 0.1)',
             maxWidth: '500px',
             margin: '0 auto',
             border: '2px solid #333'
         },
         noFilesTitle: {
-            fontSize: '1.5rem',
+            fontSize: '1.3rem',
             color: '#FFD700',
-            marginBottom: '15px'
+            marginBottom: '12px'
         },
         noFilesText: {
             color: '#cccccc',
-            marginBottom: '25px'
+            marginBottom: '20px'
         },
         uploadCta: {
             background: 'linear-gradient(135deg, #FFD700, #FFA500)',
             color: '#000',
             border: 'none',
-            padding: '12px 30px',
-            borderRadius: '25px',
-            fontSize: '1rem',
+            padding: '10px 25px',
+            borderRadius: '20px',
+            fontSize: '0.95rem',
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.3s ease'
         },
 
-        // Footer Section
+        // Footer Section - REDUCED PADDING
         footerSection: {
             background: '#000000',
             color: 'white',
-            padding: '50px 20px 20px',
+            padding: '30px 20px 15px',
             borderTop: '3px solid #FFD700'
         },
         footerContent: {
@@ -425,15 +425,15 @@ const Home = () => {
             margin: '0 auto',
             display: 'grid',
             gridTemplateColumns: '1fr 2fr',
-            gap: '50px',
-            marginBottom: '30px'
+            gap: '30px',
+            marginBottom: '20px'
         },
         footerLogo: {
             textAlign: 'left'
         },
         footerLogoTitle: {
-            fontSize: '1.8rem',
-            marginBottom: '10px',
+            fontSize: '1.5rem',
+            marginBottom: '8px',
             background: 'linear-gradient(135deg, #FFD700, #FFA500)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -441,19 +441,19 @@ const Home = () => {
         },
         footerLogoText: {
             color: '#cccccc',
-            fontSize: '1rem'
+            fontSize: '0.9rem'
         },
         footerLinks: {
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '30px'
+            gap: '20px'
         },
         footerColumn: {
             textAlign: 'left'
         },
         footerColumnTitle: {
-            fontSize: '1.2rem',
-            marginBottom: '20px',
+            fontSize: '1.1rem',
+            marginBottom: '15px',
             color: '#FFD700'
         },
         footerList: {
@@ -461,7 +461,7 @@ const Home = () => {
             padding: 0
         },
         footerListItem: {
-            marginBottom: '10px'
+            marginBottom: '8px'
         },
         footerLink: {
             color: '#cccccc',
@@ -471,7 +471,7 @@ const Home = () => {
         footerBottom: {
             maxWidth: '1200px',
             margin: '0 auto',
-            paddingTop: '20px',
+            paddingTop: '15px',
             borderTop: '1px solid #333',
             display: 'flex',
             justifyContent: 'space-between',
@@ -479,15 +479,15 @@ const Home = () => {
         },
         footerCopyright: {
             color: '#cccccc',
-            fontSize: '0.9rem'
+            fontSize: '0.85rem'
         },
         footerSocial: {
             display: 'flex',
-            gap: '15px'
+            gap: '12px'
         },
         socialIcon: {
-            width: '32px',
-            height: '32px',
+            width: '28px',
+            height: '28px',
             transition: 'transform 0.3s ease'
         },
 
@@ -742,16 +742,16 @@ const Home = () => {
                 </div>
                 <div style={styles.contactGrid}>
                     <div style={styles.contactInfo}>
-                        <h3 style={{ color: '#FFD700', marginBottom: '20px' }}>Get In Touch</h3>
-                        <p style={{ color: '#cccccc', marginBottom: '20px' }}>
+                        <h3 style={{ color: '#FFD700', marginBottom: '15px' }}>Get In Touch</h3>
+                        <p style={{ color: '#cccccc', marginBottom: '15px' }}>
                             Have questions about our music files? Need support with your uploads?
                             We're here to help you with all your musical needs.
                         </p>
-                        <div style={{ marginBottom: '15px' }}>
+                        <div style={{ marginBottom: '12px' }}>
                             <strong style={{ color: '#FFD700' }}>Email:</strong>
                             <p style={{ color: '#cccccc' }}>patrickirungumithamo@gmail.com</p>
                         </div>
-                        <div style={{ marginBottom: '15px' }}>
+                        <div style={{ marginBottom: '12px' }}>
                             <strong style={{ color: '#FFD700' }}>WhatsApp:</strong>
                             <p style={{ color: '#cccccc' }}>+254 704 742 748</p>
                         </div>
