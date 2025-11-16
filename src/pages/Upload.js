@@ -35,28 +35,32 @@ const Upload = () => {
             const storagePath = `uploads/${category}/${user.uid}/${filename}`;
 
             const storageRef = ref(storage, storagePath);
+
+            // Create upload task
             const uploadTask = uploadBytesResumable(storageRef, file);
 
-            // Upload the file first
-            const snapshot = await new Promise((resolve, reject) => {
+            // Upload the file
+            await new Promise((resolve, reject) => {
                 uploadTask.on('state_changed',
                     (snapshot) => {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                         setUploadProgress(progress);
+                        console.log(`Upload progress: ${progress}%`);
                     },
                     (error) => {
+                        console.error('Upload error:', error);
                         reject(error);
                     },
-                    () => {
-                        resolve(uploadTask.snapshot);
+                    async () => {
+                        console.log('Upload completed successfully');
+                        resolve();
                     }
                 );
             });
 
-            console.log('Upload complete, getting download URL...');
-
-            // Get download URL
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            // Get download URL after upload is complete
+            console.log('Getting download URL...');
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             console.log('Download URL obtained:', downloadURL);
 
             // Save to Firestore
@@ -76,12 +80,20 @@ const Upload = () => {
             console.log('Firestore save complete');
 
             // Success - reset form
-            alert('File uploaded successfully!');
+            console.log('Resetting form...');
             setUploadProgress(0);
             setTitle('');
             setFile(null);
             setFileName('');
             setCategory('styles');
+
+            // Clear file input
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            alert('File uploaded successfully!');
 
         } catch (error) {
             console.error('Upload error:', error);
@@ -101,6 +113,19 @@ const Upload = () => {
                 const nameWithoutExtension = selectedFile.name.replace(/\.[^/.]+$/, "");
                 setTitle(nameWithoutExtension);
             }
+        }
+    };
+
+    // Reset form function
+    const resetForm = () => {
+        setTitle('');
+        setFile(null);
+        setFileName('');
+        setCategory('styles');
+        setUploadProgress(0);
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.value = '';
         }
     };
 
@@ -302,6 +327,18 @@ const Upload = () => {
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(255, 140, 0, 0.4)',
             position: 'relative',
             overflow: 'hidden'
+        },
+
+        // Success Message
+        successMessage: {
+            textAlign: 'center',
+            padding: '15px',
+            background: 'rgba(0, 255, 0, 0.1)',
+            border: '1px solid rgba(0, 255, 0, 0.3)',
+            borderRadius: '8px',
+            color: '#00ff00',
+            marginTop: '20px',
+            fontWeight: '600'
         }
     };
 
@@ -423,7 +460,7 @@ const Upload = () => {
                 {uploading ? `Uploading... ${Math.round(uploadProgress)}%` : 'Upload File'}
             </button>
 
-            {uploadProgress > 0 && (
+            {uploadProgress > 0 && uploadProgress < 100 && (
                 <div style={styles.progressContainer}>
                     <div style={styles.progressBar}>
                         <div
@@ -435,6 +472,12 @@ const Upload = () => {
                             {Math.round(uploadProgress)}%
                         </div>
                     </div>
+                </div>
+            )}
+
+            {uploadProgress === 100 && (
+                <div style={styles.successMessage}>
+                    ✅ Upload Complete! Processing...
                 </div>
             )}
         </div>
