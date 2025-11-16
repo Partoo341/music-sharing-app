@@ -86,6 +86,31 @@ const Home = () => {
         }
     };
 
+    const handlePackageSelect = (pkg) => {
+        const phoneNumber = '254704742748';
+
+        // Create pre-written message based on the package
+        let message = `Hello! I would like to order the *${pkg.name}* from Lenskings Productions.\n\n`;
+        message += `*Package Details:*\n`;
+        message += `• Price: ${pkg.price}\n`;
+        message += `• Features:\n`;
+
+        pkg.features.forEach(feature => {
+            message += `  - ${feature}\n`;
+        });
+
+        message += `\nPlease let me know the next steps for payment and delivery.`;
+
+        // Encode the message for URL
+        const encodedMessage = encodeURIComponent(message);
+
+        // Create WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+        // Open WhatsApp in new tab
+        window.open(whatsappUrl, '_blank');
+    };
+
     const handleSendMessage = () => {
         if (!currentMessage.trim()) return;
 
@@ -145,6 +170,64 @@ const Home = () => {
 
     const recentFiles = files.slice(0, 6);
 
+    // PACKAGES DATA
+    const packages = [
+        {
+            name: "BASIC STYLE PACK",
+            price: "$15",
+            features: [
+                "5 Custom Styles",
+                "Standard Sounds",
+                "Basic Mixing",
+                "3 Revisions",
+                "48hr Delivery"
+            ],
+            popular: false
+        },
+        {
+            name: "PRO BEAT PACKAGE",
+            price: "$35",
+            features: [
+                "10 Custom Beats",
+                "Premium Sounds",
+                "Professional Mixing",
+                "5 Revisions",
+                "24hr Delivery",
+                "Commercial Rights"
+            ],
+            popular: true
+        },
+        {
+            name: "PREMIUM BUNDLE",
+            price: "$75",
+            features: [
+                "20 Styles + Beats",
+                "Studio Quality Sounds",
+                "Mastering Included",
+                "Unlimited Revisions",
+                "12hr Express Delivery",
+                "Full Commercial Rights",
+                "Lifetime Updates"
+            ],
+            popular: false
+        },
+        {
+            name: "CUSTOM PROJECT",
+            price: "Custom",
+            features: [
+                "Fully Customized",
+                "Any Genre/Style",
+                "Professional Production",
+                "One-on-One Consultation",
+                "Flexible Timeline",
+                "Full Ownership",
+                "Priority Support"
+            ],
+            popular: false
+        }
+    ];
+
+    // ... (keep all your existing styles exactly as they were)
     // ORIGINAL FONT SIZES but COMPACT SPACING
     const styles = {
         homeContainer: {
@@ -214,6 +297,82 @@ const Home = () => {
             fontWeight: '600',
             textTransform: 'uppercase',
             color: '#cccccc'
+        },
+
+        // PACKAGES SECTION - NEW
+        packagesSection: {
+            padding: '40px 20px',
+            background: '#0a0a0a'
+        },
+        packagesGrid: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+            maxWidth: '1200px',
+            margin: '0 auto'
+        },
+        packageCard: {
+            background: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)',
+            padding: '25px',
+            borderRadius: '12px',
+            color: 'white',
+            textAlign: 'center',
+            border: '2px solid #333',
+            position: 'relative',
+            transition: 'all 0.3s ease'
+        },
+        popularPackage: {
+            border: '3px solid #FFD700',
+            transform: 'scale(1.05)',
+            boxShadow: '0 10px 30px rgba(255, 215, 0, 0.3)'
+        },
+        popularBadge: {
+            position: 'absolute',
+            top: '-10px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+            color: '#000',
+            padding: '5px 15px',
+            borderRadius: '15px',
+            fontSize: '0.8rem',
+            fontWeight: '700'
+        },
+        packageName: {
+            fontSize: '1.4rem',
+            color: '#FFD700',
+            marginBottom: '10px',
+            fontWeight: '700'
+        },
+        packagePrice: {
+            fontSize: '2rem',
+            fontWeight: '800',
+            marginBottom: '20px',
+            color: '#FFD700'
+        },
+        featuresList: {
+            listStyle: 'none',
+            padding: 0,
+            margin: '0 0 25px 0',
+            textAlign: 'left'
+        },
+        featureItem: {
+            padding: '8px 0',
+            fontSize: '0.9rem',
+            color: '#cccccc',
+            borderBottom: '1px solid #333'
+        },
+        packageButton: {
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+            color: '#000',
+            border: 'none',
+            padding: '12px 30px',
+            borderRadius: '25px',
+            fontSize: '1rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            width: '100%'
         },
 
         // RECENT FILES - COMPACT but ORIGINAL FONT SIZES
@@ -563,6 +722,29 @@ const Home = () => {
         }
     };
 
+    // Hover handlers
+    const handleCardHover = (e) => {
+        e.target.style.transform = 'translateY(-5px)';
+        e.target.style.boxShadow = '0 15px 35px rgba(255, 215, 0, 0.2)';
+        e.target.style.borderColor = '#FFD700';
+    };
+
+    const handleCardLeave = (e) => {
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = 'none';
+        e.target.style.borderColor = '#333';
+    };
+
+    const handleButtonHover = (e) => {
+        e.target.style.transform = 'translateY(-2px)';
+        e.target.style.boxShadow = '0 8px 25px rgba(255, 215, 0, 0.4)';
+    };
+
+    const handleButtonLeave = (e) => {
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = 'none';
+    };
+
     return (
         <div style={styles.homeContainer}>
             {/* Hero Section */}
@@ -589,6 +771,46 @@ const Home = () => {
             </section>
 
             <AdSenseAd slot="home_after_stats" format="auto" />
+
+            {/* Packages Section - NEW */}
+            <section style={styles.packagesSection}>
+                <div style={styles.sectionHeader}>
+                    <h2 style={styles.sectionTitle}>Premium Packages</h2>
+                    <p style={styles.sectionSubtitle}>Get custom beats and style packs tailored to your needs</p>
+                </div>
+                <div style={styles.packagesGrid}>
+                    {packages.map((pkg, index) => (
+                        <div
+                            key={index}
+                            style={{
+                                ...styles.packageCard,
+                                ...(pkg.popular ? styles.popularPackage : {})
+                            }}
+                            onMouseEnter={handleCardHover}
+                            onMouseLeave={handleCardLeave}
+                        >
+                            {pkg.popular && <div style={styles.popularBadge}>MOST POPULAR</div>}
+                            <h3 style={styles.packageName}>{pkg.name}</h3>
+                            <div style={styles.packagePrice}>{pkg.price}</div>
+                            <ul style={styles.featuresList}>
+                                {pkg.features.map((feature, featureIndex) => (
+                                    <li key={featureIndex} style={styles.featureItem}>✓ {feature}</li>
+                                ))}
+                            </ul>
+                            <button
+                                style={styles.packageButton}
+                                onMouseEnter={handleButtonHover}
+                                onMouseLeave={handleButtonLeave}
+                                onClick={() => handlePackageSelect(pkg)}
+                            >
+                                {pkg.price === 'Custom' ? 'GET QUOTE' : 'ORDER NOW'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <AdSenseAd slot="home_after_packages" format="auto" />
 
             {/* Recently Added Section */}
             <section style={styles.recentSection}>
