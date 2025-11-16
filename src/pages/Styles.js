@@ -1,66 +1,79 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { storage, db } from '../firebase/config';
+import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
+import { addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Styles = () => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [migrating, setMigrating] = useState(false);
+    const [migrationStatus, setMigrationStatus] = useState('');
 
+    // Add useEffect to call fetchStyles on component mount
     useEffect(() => {
         fetchStyles();
     }, []);
 
     const fetchStyles = async () => {
         try {
-            console.log('📁 Fetching styles from Firestore...');
+            console.log('🔍 Fetching styles from Firestore...');
+            setLoading(true);
 
-            // Try multiple collection names and field combinations
-            const collections = ['uploads', 'files'];
+            // ONLY check the uploads collection which actually exists
             let allFiles = [];
 
-            for (const collectionName of collections) {
-                try {
-                    const q = query(
-                        collection(db, collectionName),
-                        where('category', '==', 'styles'),
-                        orderBy('timestamp', 'desc')
-                    );
-                    const querySnapshot = await getDocs(q);
+            try {
+                console.log('📁 Checking uploads collection for styles...');
 
-                    console.log(`📁 ${collectionName} collection:`, querySnapshot.size, 'styles found');
+                // First, try to query styles specifically
+                const stylesQuery = query(
+                    collection(db, 'uploads'),
+                    where('category', '==', 'styles')
+                );
+                const stylesSnapshot = await getDocs(stylesQuery);
 
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        console.log('📄 Style:', data.title, data);
-                        allFiles.push({
-                            id: doc.id,
-                            ...data,
-                            collection: collectionName
-                        });
+                console.log(`🎯 Styles in uploads: ${stylesSnapshot.size} documents`);
+
+                stylesSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    console.log(`📄 Style: ${data.title || data.fileName}`, data);
+                    allFiles.push({
+                        id: doc.id,
+                        ...data,
+                        collection: 'uploads'
                     });
-                } catch (error) {
-                    console.log(`❌ Error in ${collectionName}:`, error.message);
-                    // Try without timestamp ordering
-                    try {
-                        const simpleQuery = query(
-                            collection(db, collectionName),
-                            where('category', '==', 'styles')
-                        );
-                        const simpleSnapshot = await getDocs(simpleQuery);
+                });
 
-                        simpleSnapshot.forEach((doc) => {
-                            const data = doc.data();
+                // If no styles found with category query, get all uploads and filter manually
+                if (stylesSnapshot.size === 0) {
+                    console.log('🔍 No styles found with category query, checking all uploads...');
+                    const allUploadsQuery = query(collection(db, 'uploads'));
+                    const allUploadsSnapshot = await getDocs(allUploadsQuery);
+
+                    console.log(`📊 All documents in uploads: ${allUploadsSnapshot.size}`);
+
+                    allUploadsSnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        // Check if it's a style file by category or file extension
+                        if (data.category === 'styles' ||
+                            data.fileName?.toLowerCase().includes('.sty') ||
+                            data.fileName?.toLowerCase().includes('.sff') ||
+                            data.fileName?.toLowerCase().includes('.sff1') ||
+                            data.fileName?.toLowerCase().includes('.sff2')) {
+                            console.log(`🎯 Found style in all uploads: ${data.fileName}`);
                             allFiles.push({
                                 id: doc.id,
                                 ...data,
-                                collection: collectionName
+                                collection: 'uploads'
                             });
-                        });
-                    } catch (simpleError) {
-                        console.log(`❌ Simple query failed for ${collectionName}:`, simpleError.message);
-                    }
+                        }
+                    });
                 }
+
+            } catch (uploadError) {
+                console.error('❌ Error accessing uploads collection:', uploadError);
             }
 
             console.log('📊 Total styles found:', allFiles.length);
@@ -74,6 +87,86 @@ const Styles = () => {
         }
     };
 
+    // Migration function
+    const migrateFilesToFirestore = async () => {
+        try {
+            setMigrating(true);
+            setMigrationStatus('🚀 Starting migration from Storage to Firestore...');
+
+            // List all files in storage
+            const storageRef = ref(storage, 'uploads/');
+            const result = await listAll(storageRef);
+
+            setMigrationStatus(`📁 Found ${result.items.length} files in Storage`);
+
+            let migratedCount = 0;
+            let errorCount = 0;
+
+            // Process each file
+            for (const itemRef of result.items) {
+                try {
+                    // Get file metadata and download URL
+                    const [downloadURL, metadata] = await Promise.all([
+                        getDownloadURL(itemRef),
+                        getMetadata(itemRef)
+                    ]);
+
+                    // Extract category from path (uploads/styles/... or uploads/voices/...)
+                    const pathParts = itemRef.fullPath.split('/');
+                    const category = pathParts[1] || 'styles'; // Default to styles if no category in path
+
+                    // Check if file already exists in Firestore
+                    const existingQuery = query(
+                        collection(db, 'uploads'),
+                        where('fileName', '==', metadata.name)
+                    );
+                    const existingSnapshot = await getDocs(existingQuery);
+
+                    if (existingSnapshot.empty) {
+                        // Create Firestore document only if it doesn't exist
+                        await addDoc(collection(db, 'uploads'), {
+                            title: metadata.name.replace(/\.[^/.]+$/, ""), // Remove extension
+                            category: category,
+                            fileName: metadata.name,
+                            fileSize: metadata.size,
+                            fileType: metadata.contentType,
+                            downloadURL: downloadURL,
+                            storagePath: itemRef.fullPath,
+                            userId: 'migration',
+                            userEmail: 'migration@lenskings.com',
+                            timestamp: serverTimestamp()
+                        });
+
+                        console.log(`✅ Migrated: ${metadata.name}`);
+                        setMigrationStatus(`✅ Migrated: ${metadata.name}`);
+                        migratedCount++;
+                    } else {
+                        console.log(`⚠️ Already exists: ${metadata.name}`);
+                        setMigrationStatus(`⚠️ Already exists: ${metadata.name}`);
+                    }
+
+                } catch (error) {
+                    console.error(`❌ Failed to migrate ${itemRef.name}:`, error);
+                    setMigrationStatus(`❌ Failed: ${itemRef.name}`);
+                    errorCount++;
+                }
+            }
+
+            const finalMessage = `🎉 Migration complete! ${migratedCount} files migrated, ${errorCount} errors`;
+            setMigrationStatus(finalMessage);
+            console.log(finalMessage);
+
+            // Refresh the styles list after migration
+            await fetchStyles(); // Wait for fetch to complete
+
+        } catch (error) {
+            console.error('❌ Migration failed:', error);
+            setMigrationStatus(`❌ Migration failed: ${error.message}`);
+        } finally {
+            setMigrating(false);
+        }
+    };
+
     const filteredFiles = files.filter(file => {
         if (!file) return false;
         return file.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,6 +174,7 @@ const Styles = () => {
             file.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    // ... (keep all your existing styles and JSX code exactly as they are)
     // Styles - Black, White, Golden, Yellow Theme
     const styles = {
         // Container
@@ -105,6 +199,39 @@ const Styles = () => {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
+        },
+
+        // Migration Section
+        migrationSection: {
+            background: '#1a1a1a',
+            padding: '20px',
+            borderRadius: '10px',
+            border: '2px solid #FFD700',
+            marginBottom: '30px',
+            textAlign: 'center'
+        },
+        migrationButton: {
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+            color: '#000',
+            border: 'none',
+            padding: '12px 25px',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            marginBottom: '15px'
+        },
+        migrationButtonDisabled: {
+            background: '#666',
+            color: '#999',
+            cursor: 'not-allowed'
+        },
+        migrationStatus: {
+            color: '#FFD700',
+            fontSize: '0.9rem',
+            marginTop: '10px',
+            minHeight: '20px'
         },
 
         // Search Section
@@ -237,8 +364,10 @@ const Styles = () => {
     };
 
     const handleButtonHover = (e) => {
-        e.target.style.transform = 'translateY(-2px)';
-        e.target.style.boxShadow = '0 8px 25px rgba(255, 215, 0, 0.4)';
+        if (!migrating) {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 8px 25px rgba(255, 215, 0, 0.4)';
+        }
     };
 
     const handleButtonLeave = (e) => {
@@ -279,28 +408,61 @@ const Styles = () => {
                 </p>
             </div>
 
+            {/* Migration Section - Only show if no files found */}
+            {files.length === 0 && (
+                <div style={styles.migrationSection}>
+                    <h3 style={{ color: '#FFD700', marginBottom: '15px' }}>
+                        No Styles Found in Database
+                    </h3>
+                    <p style={{ color: '#cccccc', marginBottom: '20px' }}>
+                        Your files are in Storage but not in Firestore. Click below to migrate them.
+                    </p>
+                    <button
+                        onClick={migrateFilesToFirestore}
+                        disabled={migrating}
+                        style={{
+                            ...styles.migrationButton,
+                            ...(migrating ? styles.migrationButtonDisabled : {})
+                        }}
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
+                    >
+                        {migrating ? '🔄 Migrating...' : '🚀 Migrate Files from Storage'}
+                    </button>
+                    {migrationStatus && (
+                        <div style={styles.migrationStatus}>
+                            {migrationStatus}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Stats */}
-            <div style={styles.stats}>
-                {filteredFiles.length} {filteredFiles.length === 1 ? 'style' : 'styles'} found
-                {searchTerm && ` for "${searchTerm}"`}
-            </div>
+            {files.length > 0 && (
+                <div style={styles.stats}>
+                    {filteredFiles.length} {filteredFiles.length === 1 ? 'style' : 'styles'} found
+                    {searchTerm && ` for "${searchTerm}"`}
+                </div>
+            )}
 
             {/* Search Section */}
-            <div style={styles.searchSection}>
-                <input
-                    type="text"
-                    placeholder="Search styles by title, filename, or uploader..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    style={styles.searchInput}
-                />
-            </div>
+            {files.length > 0 && (
+                <div style={styles.searchSection}>
+                    <input
+                        type="text"
+                        placeholder="Search styles by title, filename, or uploader..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={handleInputFocus}
+                        onBlur={handleInputBlur}
+                        style={styles.searchInput}
+                    />
+                </div>
+            )}
 
             {/* Files Grid */}
             <div style={styles.filesGrid}>
-                {filteredFiles.length === 0 ? (
+                {filteredFiles.length === 0 && files.length > 0 ? (
                     <div style={styles.noFiles}>
                         <h3 style={{ color: '#FFD700', marginBottom: '15px' }}>
                             {searchTerm ? 'No styles found' : 'No styles available'}
