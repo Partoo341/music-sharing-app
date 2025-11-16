@@ -1,13 +1,15 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth"; // ADD THIS
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCdQDAyEsOcqKlqmaa3nOGOa8u7zqpifys",
     authDomain: "lenskings-productions.firebaseapp.com",
+    databaseURL: "https://lenskings-productions-default-rtdb.firebaseio.com",
     projectId: "lenskings-productions",
     storageBucket: "lenskings-productions.firebasestorage.app",
     messagingSenderId: "815740011541",
@@ -17,11 +19,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+const analytics = getAnalytics(app);
 export const db = getFirestore(app);
-
-// Export the app instance as default
-export default app;
+export const storage = getStorage(app);
+export const auth = getAuth(app); // ADD THIS
